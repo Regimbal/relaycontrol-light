@@ -8,6 +8,9 @@ from logger_config import setup_logging
 from mqtt_listener import start_mqtt, stop_mqtt
 from state_manager import get_state
 
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.WARNING)
+
 # MQTT thread
 mqtt_thread = threading.Thread(target=start_mqtt, daemon=True)
 
@@ -22,7 +25,7 @@ def api_state():
     return jsonify(get_state())
 
 
-def graceful_exit():
+def graceful_exit(signum, frame):
     logging.info("Stopping program...")
     stop_mqtt()
     logging.info("Goodbye.")

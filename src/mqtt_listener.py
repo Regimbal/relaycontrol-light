@@ -53,7 +53,7 @@ def start_mqtt():
     port = mqtt_cfg.get("port", 8883 if mqtt_cfg.get("use_tls", False) else 1883)
 
     connect_with_retries(client, broker, port, keepalive=60)
-    client.loop_start()
+    client.loop_forever()
 
 def stop_mqtt():
     client.disconnect()
