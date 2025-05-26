@@ -1,0 +1,5 @@
+__pycache__/
+.pybuild/
+*.pyc
+.env
+*.zip

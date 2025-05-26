@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Sensor Dashboard</title>
+  <style>
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>Sensor Status</h1>
+  <table id="state-table">
+    <thead>
+      <tr><th>Sensor</th><th>Zone</th><th>Alarm</th><th>Tamper</th><th>Battery</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <script>
+    async function fetchState() {
+      const res = await fetch("/api/state");
+      const data = await res.json();
+      const tbody = document.querySelector("#state-table tbody");
+      tbody.innerHTML = "";
+      for (const [id, entry] of Object.entries(data)) {
+        const row = `<tr>
+          <td>${id}</td>
+          <td>${entry.zone}</td>
+          <td>${entry.alarm}</td>
+          <td>${entry.tamper}</td>
+          <td>${entry.battery_low}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      }
+    }
+    setInterval(fetchState, 3000);
+    fetchState();
+  </script>
+</body>
+</html>
