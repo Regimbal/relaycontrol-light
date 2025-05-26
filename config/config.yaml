@@ -1,0 +1,15 @@
+log:
+  level: WARNING
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  topic: "application/+/device/+/event/up"
+
+dashboard:
+  enable: true
+  bind: "0.0.0.0"
+  port: 8080
+
+codec:
+  invissys: ""

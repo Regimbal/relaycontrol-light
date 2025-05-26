@@ -1,0 +1,111 @@
+Z1:
+  ip: "127.0.0.1"
+  alarm: 1
+  tamper: 2
+  low_batt:
+  conn_issue:
+
+Z2:
+  ip: "127.0.0.1"
+  alarm: 3
+  tamper: 4
+  low_batt:
+  conn_issue:
+
+Z3:
+  ip: "127.0.0.1"
+  alarm: 5
+  tamper: 6
+  low_batt:
+  conn_issue:
+
+Z4:
+  ip: "127.0.0.1"
+  alarm: 7
+  tamper: 8
+  low_batt:
+  conn_issue:
+
+Z5:
+  ip: "127.0.0.1"
+  alarm: 9
+  tamper: 10
+  low_batt:
+  conn_issue:
+
+Z6:
+  ip: "127.0.0.1"
+  alarm: 11
+  tamper: 12
+  low_batt:
+  conn_issue:
+
+Z7:
+  ip: "127.0.0.1"
+  alarm: 13
+  tamper: 14
+  low_batt:
+  conn_issue:
+
+Z8:
+  ip: "127.0.0.1"
+  alarm: 15
+  tamper: 16
+  low_batt:
+  conn_issue:
+
+Z9:
+  ip: "127.0.0.1"
+  alarm: 17
+  tamper: 18
+  low_batt:
+  conn_issue:
+
+Z10:
+  ip: "127.0.0.1"
+  alarm: 19
+  tamper: 20
+  low_batt:
+  conn_issue:
+
+Z11:
+  ip: "127.0.0.1"
+  alarm: 21
+  tamper: 22
+  low_batt:
+  conn_issue:
+
+Z12:
+  ip: "127.0.0.1"
+  alarm: 23
+  tamper: 24
+  low_batt:
+  conn_issue:
+
+Z13:
+  ip: "127.0.0.1"
+  alarm: 25
+  tamper: 26
+  low_batt:
+  conn_issue:
+
+Z14:
+  ip: "127.0.0.1"
+  alarm: 27
+  tamper: 28
+  low_batt:
+  conn_issue:
+
+Z15:
+  ip: "127.0.0.1"
+  alarm: 29
+  tamper: 30
+  low_batt:
+  conn_issue:
+
+Z16:
+  ip: "127.0.0.1"
+  alarm: 
+  tamper: 
+  low_batt:
+  conn_issue:
