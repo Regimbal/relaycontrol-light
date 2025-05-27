@@ -31,47 +31,39 @@ def decode(payload: bytes) -> dict:
         power_supply = (payload[1] & 0x7F) / 10
         battery_low = power_supply <= 3.3
         tamper = False
-
     elif application_type == "OPT":
         power_supply = (payload[1] & 0x7F) / 10
         battery_low = power_supply <= 2.5
         tamper = bool(payload[0] & 0x01)
-
     else:
-        logging.warning(f"Unknown application type")
+        logging.warning("Unknown application type")
 
     if frame_type == "UP_EVENT":
-        if len(payload) <= 5:
-            raise ValueError("Payload too short for UP_EVENT frame (need at least 6 bytes)")
-        
         if application_type == "HE":
+            if len(payload) < 6:
+                raise ValueError("Payload too short for UP_EVENT frame (need at least 6 bytes)")
             alarm = bool(payload[5] & 0x01)
-
         elif application_type == "OPT":
-            infrared_trouble= bool(payload[5] >> 4 & 1),
-            infrared_detect4= bool(payload[5] >> 3 & 1),
-            infrared_detect3= bool(payload[5] >> 2 & 1),
-            infrared_detect2= bool(payload[5] >> 1 & 1),
-            infrared_detect1= bool(payload[5] >> 0 & 1)
-            alarm = (
-                infrared_trouble
-                or infrared_detect1
-                or infrared_detect2
-                or infrared_detect3
-                or infrared_detect4
-            )
+            if len(payload) < 6:
+                raise ValueError("Payload too short for UP_EVENT frame (need at least 6 bytes)")
+            infrared_trouble = bool((payload[5] >> 4) & 0x01)
+            infrared_detect4 = bool((payload[5] >> 3) & 0x01)
+            infrared_detect3 = bool((payload[5] >> 2) & 0x01)
+            infrared_detect2 = bool((payload[5] >> 1) & 0x01)
+            infrared_detect1 = bool(payload[5] & 0x01)
+            alarm = infrared_trouble or infrared_detect1 or infrared_detect2 or infrared_detect3 or infrared_detect4
             alarm_expire = True
         else:
-            logging.warning(f"No alarm matching field")
+            logging.warning("No alarm matching field")
     else:
-        logging.warning(f"Not an event")
+        logging.warning("Not an event")
 
     return {
         "application": application_type,
         "frameType": frame_type,
-        "tamper": tamper,        # 1 = ouvert
-        "battery_low": battery_low,    # seuil batterie faible arbitraire
+        "tamper": tamper,
+        "battery_low": battery_low,
         "alarm": alarm,
         "alarm_expire": alarm_expire,
-        "battery_voltage": power_supply,     # valeur brute de batterie
+        "battery_voltage": power_supply,
     }
