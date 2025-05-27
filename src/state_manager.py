@@ -60,9 +60,12 @@ class StateManager:
             new_data["last_seen"] = datetime.utcnow().isoformat() + "Z"
         new_data["zone"] = dev_name.rsplit("_", 1)[-1] if dev_name and "_" in dev_name else None
         new_data["dev_name"] = dev_name
+        old_zone = self.state.get(dev_eui, {}).get("zone")
         self.state[dev_eui] = new_data
         self._save_state()
         logging.debug(f"Updated state for {dev_eui}: {new_data}")
+        if old_zone and old_zone != new_data.get("zone"):
+            self._update_zone_status(old_zone)
         if new_data.get("zone"):
             self._update_zone_status(new_data["zone"])
         if new_data.get("alarm") and new_data.get("alarm_expire"):

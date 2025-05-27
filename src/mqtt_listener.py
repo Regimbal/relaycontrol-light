@@ -34,7 +34,7 @@ def on_disconnect(client, userdata, rc):
 def on_message(client, userdata, msg):
     try:
         payload = json.loads(msg.payload.decode())
-        logging.debug(f"{payload}")
+        logging.debug(f"Received message: {payload}")
         dev_eui = payload.get("devEUI")
         dev_name = payload.get("deviceName")
         codec_name = payload.get("applicationName")
