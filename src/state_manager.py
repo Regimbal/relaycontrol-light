@@ -1,8 +1,9 @@
 # state_manager.py
-import json, logging
+import json, logging, yaml
 import os
-from datetime import datetime, timedelta
 import threading
+from datetime import datetime, timedelta
+from relay_controller import send_tcp_command
 
 STATE_FILE = "state.json"
 
@@ -14,13 +15,29 @@ class StateManager:
         self.state = self._load_state()
         self._reset_timers = {}
         self.zones = {}
+        with open("config/zones.yaml") as f:
+            self.zone_config = yaml.safe_load(f)
 
     def _update_zone_status(self, zone):
         sensors = [c for c in self.state.values() if c.get("zone") == zone]
         alarm = any(c.get("alarm") for c in sensors)
         tamper = any(c.get("tamper") for c in sensors)
+        prev = self.zones.get(zone, {})
         self.zones[zone] = {"alarm": alarm, "tamper": tamper}
         logging.info(f"Updates zones: {self.zones}")
+        config = self.zone_config.get(zone)
+        if not config:
+            logging.warning("no config file for zones found")
+            return
+        # Comparaison et envoi des commandes TCP
+        for key in ["alarm", "tamper"]:
+            if key not in config:
+                continue
+            if prev.get(key) != self.zones[zone][key]:
+                relay_index = config[key]
+                ip = config["ip"]
+                send_tcp_command(ip, relay_index, self.zones[zone][key])
+
 
     def _load_state(self):
         if os.path.exists(self.filename):
