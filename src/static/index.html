@@ -6,13 +6,21 @@
   <style>
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .status-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .online { background-color: green; }
+  .offline { background-color: red; }
   </style>
 </head>
 <body>
-  <h1>Sensor Status</h1>
+  <h1>Tableau de Bord</h1>
   <table id="state-table">
     <thead>
-      <tr><th>Sensor</th><th>Zone</th><th>Alarm</th><th>Tamper</th><th>Battery</th></tr>
+      <tr><th>Device Name</th><th>devEUI</th><th>Zone</th><th>Online</th><th>Alarm State</th><th>Tamper</th><th>Low Battery</th><th>Last Seen</th></tr>
     </thead>
     <tbody></tbody>
   </table>
@@ -24,11 +32,14 @@
       tbody.innerHTML = "";
       for (const [id, entry] of Object.entries(data)) {
         const row = `<tr>
+          <td>${entry.dev_name}</td>
           <td>${id}</td>
-          <td>${entry.zone}</td>
-          <td>${entry.alarm}</td>
-          <td>${entry.tamper}</td>
-          <td>${entry.battery_low}</td>
+          <td>${entry.zone ?? ''}</td>
+          <td><span class="status-dot ${entry.online ? 'online' : 'offline'}"></span></td>
+          <td><span class="status-dot ${entry.alarm ? 'offline' : 'online'}"></span></td>
+          <td><span class="status-dot ${entry.tamper ? 'offline' : 'online'}"></span></td>
+          <td><span class="status-dot ${entry.battery_low ? 'offline' : 'online'}"></span></td>
+          <td>${entry.last_seen}</td>
         </tr>`;
         tbody.innerHTML += row;
       }
