@@ -1,69 +1,147 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Sensor Dashboard</title>
+  <title>Tableau de Bord</title>
   <style>
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+
+    h1, h2 {
+      color: #444;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-bottom: 2em;
+      background-color: white;
+      box-shadow: 0 0 5px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #f1f1f1;
+    }
+
     .status-dot {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-  }
-  .online { background-color: green; }
-  .offline { background-color: red; }
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .online { background-color: green; }
+    .offline { background-color: red; }
+
+    .value-true {
+      background-color: rgba(244, 67, 54, 0.15); /* rouge clair */
+      color: #c00;
+      font-weight: bold;
+    }
+
+    .value-false {
+      background-color: rgba(0, 128, 0, 0.1); /* vert clair */
+      color: green;
+      font-weight: bold;
+    }
+
+    .zone-true {
+      background-color: rgba(244, 67, 54, 0.15);
+      color: #c00;
+      font-weight: bold;
+    }
+
+    .zone-false {
+      background-color: rgba(0, 128, 0, 0.1);
+      color: #222;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <h1>Dashboard</h1>
-  <h2>Zones states</h2>
+  <h1>Tableau de Bord</h1>
+
+  <h2>État des zones</h2>
   <table id="zone-table">
     <thead>
-      <tr><th>Zone</th><th>Alarm</th><th>Tamper</th></tr>
+      <tr id="zone-header"><th>État</th></tr>
     </thead>
-    <tbody></tbody>
+    <tbody>
+      <tr id="zone-alarm"><td>En alarme</td></tr>
+      <tr id="zone-tamper"><td>Autoprotection</td></tr>
+    </tbody>
   </table>
-  <h2>Sensors states</h2>
+
+  <h2>Capteurs</h2>
   <table id="state-table">
     <thead>
-      <tr><th>Device Name</th><th>devEUI</th><th>Zone</th><th>Online</th><th>Alarm State</th><th>Tamper</th><th>Low Battery</th><th>Last Seen</th></tr>
+      <tr>
+        <th>Capteur</th><th>Zone</th><th>Connecté</th><th>En Alarme</th><th>Autoprotection</th><th>Batterie Faible</th><th>Dernier message</th>
+      </tr>
     </thead>
     <tbody></tbody>
   </table>
+
   <script>
+    function formatTime(isoString) {
+      if (!isoString) return "—";
+      const date = new Date(isoString);
+      return date.toISOString().split(".")[0] + "Z";  // arrondi à la seconde
+    }
+
     async function fetchState() {
       const res = await fetch("/api/state");
       const data = await res.json();
       const tbody = document.querySelector("#state-table tbody");
       tbody.innerHTML = "";
-      for (const [id, entry] of Object.entries(data)) {
+
+      const sorted = Object.entries(data).sort((a, b) => {
+        const za = a[1].zone || "";
+        const zb = b[1].zone || "";
+        return za.localeCompare(zb);
+      });
+
+      for (const [id, entry] of sorted) {
+        const name = `${entry.dev_name} (${id})`;
         const row = `<tr>
-          <td>${entry.dev_name}</td>
-          <td>${id}</td>
-          <td>${entry.zone ?? ''}</td>
+          <td>${name}</td>
+          <td>${entry.zone ?? ""}</td>
           <td><span class="status-dot ${entry.online ? 'online' : 'offline'}"></span></td>
-          <td><span class="status-dot ${entry.alarm ? 'offline' : 'online'}"></span></td>
-          <td><span class="status-dot ${entry.tamper ? 'offline' : 'online'}"></span></td>
-          <td><span class="status-dot ${entry.battery_low ? 'offline' : 'online'}"></span></td>
-          <td>${entry.last_seen}</td>
+          <td class="value-${entry.alarm}">${entry.alarm ? "Oui" : "Non"}</td>
+          <td class="value-${entry.tamper}">${entry.tamper ? "Oui" : "Non"}</td>
+          <td class="value-${entry.battery_low}">${entry.battery_low ? "Oui" : "Non"}</td>
+          <td>${formatTime(entry.last_seen)}</td>
         </tr>`;
         tbody.innerHTML += row;
       }
     }
+
     async function fetchZones() {
       const res = await fetch("/api/zones");
       const data = await res.json();
-      const tbody = document.querySelector("#zone-table tbody");
-      tbody.innerHTML = "";
+
+      const headerRow = document.getElementById("zone-header");
+      const alarmRow = document.getElementById("zone-alarm");
+      const tamperRow = document.getElementById("zone-tamper");
+
+      headerRow.innerHTML = "<th>État</th>";
+      alarmRow.innerHTML = "<td>En alarme</td>";
+      tamperRow.innerHTML = "<td>Autoprotection</td>";
+
       for (const [zone, entry] of Object.entries(data)) {
-        const row = `<tr>
-          <td>${zone}</td>
-          <td><span class="status-dot ${entry.alarm ? 'offline' : 'online'}"></span></td>
-          <td><span class="status-dot ${entry.tamper ? 'offline' : 'online'}"></span></td>
-        </tr>`;
-        tbody.innerHTML += row;
+        headerRow.innerHTML += `<th>${zone}</th>`;
+        alarmRow.innerHTML += `<td class="zone-${entry.alarm}">${entry.alarm ? "❌" : "—"}</td>`;
+        tamperRow.innerHTML += `<td class="zone-${entry.tamper}">${entry.tamper ? "❌" : "—"}</td>`;
       }
     }
 
@@ -71,6 +149,7 @@
       fetchState();
       fetchZones();
     }
+
     setInterval(refreshAll, 3000);
     refreshAll();
   </script>
