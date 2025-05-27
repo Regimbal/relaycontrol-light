@@ -35,6 +35,20 @@ def on_message(client, userdata, msg):
         payload = json.loads(msg.payload.decode())
         logging.debug(f"{payload}")
         dev_eui = payload.get("devEUI")
+        codec_name = payload.get("applicationName")
+        data_encode = payload.get("data_encode", "")
+
+        if data_encode != "hexstring":
+            logging.error(f"Ignored message from {dev_eui} (data_encode={data_encode}) different from HEX")
+            return
+        
+        data_hex = payload.get("data", "")
+
+        codec = importlib.import_module(f"codec.{codec_name}")
+        payload_bytes = bytes.fromhex(data_hex)
+        data_decoded = codec.decode(payload_bytes)
+        logging.debug(f"{dev_eui}: decoded payload is {data_decoded}")
+
     except Exception as e:
         logging.error(f"Error while processing MQTT message: {e}")
 
