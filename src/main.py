@@ -7,11 +7,10 @@ from config_loader import load_config, get_log_level, get_dashboard_config
 from logger_config import setup_logging
 from mqtt_listener import start_mqtt, stop_mqtt
 from state_manager import StateManager
+from state_manager_instance import state_manager
 
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.WARNING)
-
-state_manager = StateManager()
 
 # MQTT thread
 mqtt_thread = threading.Thread(target=start_mqtt, daemon=True)
@@ -24,6 +23,7 @@ def index():
 
 @app.route("/api/state")
 def api_state():
+    #logging.debug(f"/api/state:  refreshing states with {state_manager.get_state()}")
     return jsonify(state_manager.get_state())
 
 

@@ -2,13 +2,12 @@ import yaml, importlib, re, logging, time, json
 import paho.mqtt.client as mqtt
 from config_loader import get_mqtt_config
 from state_manager import StateManager
+from state_manager_instance import state_manager
 
 logger = logging.getLogger(__name__)
 
 client = mqtt.Client(client_id="relaycontroller")
 mqtt_cfg = get_mqtt_config()
-
-state_manager = StateManager()
 
 def connect_with_retries(client, host, port, keepalive, retry_interval=5):
     while True:
