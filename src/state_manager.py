@@ -15,8 +15,32 @@ class StateManager:
         self.state = self._load_state()
         self._reset_timers = {}
         self.zones = {}
-        with open("config/zones.yaml") as f:
-            self.zone_config = yaml.safe_load(f)
+        self.zone_config = {}
+        self.aggregate_config = {}
+
+        zones_raw = yaml.safe_load(open("config/zones.yaml"))
+
+        for key, val in zones_raw.items():
+            if key == "__aggregates__":
+                self.aggregate_config = val
+            else:
+                self.zone_config[key] = val
+
+    def update_aggregate_relays(self):
+        if not self.aggregate_config:
+            return
+
+        # Batterie faible : au moins un capteur concerné
+        if "battery_low" in self.aggregate_config:
+            battery_low = any(sensor.get("battery_low") for sensor in self.state.values())
+            cfg = self.aggregate_config["battery_low"]
+            send_tcp_command(cfg["ip"], cfg["relay"], battery_low)
+
+        # Connectivité : au moins un capteur offline
+        if "connectivity" in self.aggregate_config:
+            any_offline = any(not sensor.get("online", False) for sensor in self.state.values())
+            cfg = self.aggregate_config["connectivity"]
+            send_tcp_command(cfg["ip"], cfg["relay"], any_offline)
 
     def _update_zone_status(self, zone):
         sensors = [c for c in self.state.values() if c.get("zone") == zone]
@@ -70,6 +94,7 @@ class StateManager:
             self._update_zone_status(new_data["zone"])
         if new_data.get("alarm") and new_data.get("alarm_expire"):
             self._schedule_alarm_reset(dev_eui, dev_name)
+        self.update_aggregate_relays()
 
     def _schedule_alarm_reset(self, dev_eui, dev_name):
         def reset():
