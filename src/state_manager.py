@@ -13,6 +13,14 @@ class StateManager:
         self.filename = filename
         self.state = self._load_state()
         self._reset_timers = {}
+        self.zones = {}
+
+    def _update_zone_status(self, zone):
+        sensors = [c for c in self.state.values() if c.get("zone") == zone]
+        alarm = any(c.get("alarm") for c in sensors)
+        tamper = any(c.get("tamper") for c in sensors)
+        self.zones[zone] = {"alarm": alarm, "tamper": tamper}
+        logging.info(f"Updates zones: {self.zones}")
 
     def _load_state(self):
         if os.path.exists(self.filename):
@@ -37,7 +45,9 @@ class StateManager:
         new_data["dev_name"] = dev_name
         self.state[dev_eui] = new_data
         self._save_state()
-        logging.debug(f"État mis à jour pour {dev_eui}: {new_data}")
+        logging.debug(f"Updated state for {dev_eui}: {new_data}")
+        if new_data.get("zone"):
+            self._update_zone_status(new_data["zone"])
         if new_data.get("alarm") and new_data.get("alarm_expire"):
             self._schedule_alarm_reset(dev_eui, dev_name)
 
@@ -45,7 +55,7 @@ class StateManager:
         def reset():
             entry = self.state.get(dev_eui)
             if entry and entry.get("alarm"):
-                logging.info(f"Alarm reset for {dev_eui}")
+                logging.debug(f"Alarm reset for {dev_eui}")
                 entry["alarm"] = False
                 self.update_sensor(dev_eui, dev_name, entry, touch_last_seen=False)
             self._reset_timers.pop(dev_eui, None)
@@ -75,3 +85,6 @@ class StateManager:
 
     def get_sensor(self, devEUI):
         return self.state.get(devEUI)
+
+    def get_zone_states(self):
+        return self.zones
