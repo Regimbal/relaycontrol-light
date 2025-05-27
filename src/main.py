@@ -26,6 +26,9 @@ def api_state():
     #logging.debug(f"/api/state:  refreshing states with {state_manager.get_state()}")
     return jsonify(state_manager.get_state())
 
+@app.route("/api/zones")
+def api_zones():
+    return jsonify(state_manager.get_zone_states())
 
 def graceful_exit(signum, frame):
     logging.info("Stopping program...")

@@ -17,7 +17,15 @@
   </style>
 </head>
 <body>
-  <h1>Tableau de Bord</h1>
+  <h1>Dashboard</h1>
+  <h2>Zones states</h2>
+  <table id="zone-table">
+    <thead>
+      <tr><th>Zone</th><th>Alarm</th><th>Tamper</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <h2>Sensors states</h2>
   <table id="state-table">
     <thead>
       <tr><th>Device Name</th><th>devEUI</th><th>Zone</th><th>Online</th><th>Alarm State</th><th>Tamper</th><th>Low Battery</th><th>Last Seen</th></tr>
@@ -44,8 +52,27 @@
         tbody.innerHTML += row;
       }
     }
-    setInterval(fetchState, 3000);
-    fetchState();
+    async function fetchZones() {
+      const res = await fetch("/api/zones");
+      const data = await res.json();
+      const tbody = document.querySelector("#zone-table tbody");
+      tbody.innerHTML = "";
+      for (const [zone, entry] of Object.entries(data)) {
+        const row = `<tr>
+          <td>${zone}</td>
+          <td><span class="status-dot ${entry.alarm ? 'offline' : 'online'}"></span></td>
+          <td><span class="status-dot ${entry.tamper ? 'offline' : 'online'}"></span></td>
+        </tr>`;
+        tbody.innerHTML += row;
+      }
+    }
+
+    function refreshAll() {
+      fetchState();
+      fetchZones();
+    }
+    setInterval(refreshAll, 3000);
+    refreshAll();
   </script>
 </body>
 </html>
