@@ -59,7 +59,7 @@ def decode(payload: bytes) -> dict:
         logging.warning("Not an event")
 
     return {
-        "application": application_type,
+        "applicationType": application_type,
         "frameType": frame_type,
         "tamper": tamper,
         "battery_low": battery_low,

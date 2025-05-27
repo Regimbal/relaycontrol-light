@@ -1,12 +1,14 @@
 import yaml, importlib, re, logging, time, json
 import paho.mqtt.client as mqtt
 from config_loader import get_mqtt_config
-from state_manager import update_state
+from state_manager import StateManager
 
 logger = logging.getLogger(__name__)
 
 client = mqtt.Client(client_id="relaycontroller")
 mqtt_cfg = get_mqtt_config()
+
+state_manager = StateManager()
 
 def connect_with_retries(client, host, port, keepalive, retry_interval=5):
     while True:
@@ -35,6 +37,7 @@ def on_message(client, userdata, msg):
         payload = json.loads(msg.payload.decode())
         logging.debug(f"{payload}")
         dev_eui = payload.get("devEUI")
+        dev_name = payload.get("deviceName")
         codec_name = payload.get("applicationName")
         data_encode = payload.get("data_encode", "")
 
@@ -48,6 +51,8 @@ def on_message(client, userdata, msg):
         payload_bytes = bytes.fromhex(data_hex)
         data_decoded = codec.decode(payload_bytes)
         logging.debug(f"{dev_eui}: decoded payload is {data_decoded}")
+
+        state_manager.update_sensor(dev_eui, dev_name, data_decoded)
 
     except Exception as e:
         logging.error(f"Error while processing MQTT message: {e}")
