@@ -1,11 +1,12 @@
 # state_manager.py
-import json, logging, yaml
+import json, logging, yaml, time
 import os
 import threading
 from datetime import datetime, timedelta
 from relay_controller import send_tcp_command
 
 STATE_FILE = "state.json"
+SAVE_INTERVAL_SECONDS = 60  # toutes les heures
 
 OFFLINE_THRESHOLD_HOURS = 24
 
@@ -17,6 +18,9 @@ class StateManager:
         self.zones = {}
         self.zone_config = {}
         self.aggregate_config = {}
+        self.lock = threading.Lock()
+        self.dobackup = False
+        self._start_auto_save()
 
         zones_raw = yaml.safe_load(open("config/zones.yaml"))
 
@@ -71,30 +75,46 @@ class StateManager:
             except Exception as e:
                 logging.warning(f"Could not load state file: {e}")
         return {}
-
-    def _save_state(self):
+    
+    def _atomic_save(self):
+        tmp_file = self.filename + ".tmp"
         try:
-            with open(self.filename, "w") as f:
+            with open(tmp_file, "w") as f:
                 json.dump(self.state, f, indent=2)
+            os.replace(tmp_file, self.filename)
         except Exception as e:
-            logging.warning(f"Could not save state file: {e}")
+            logging.error(f"Could not save state file: {e}")
+        
+    def _start_auto_save(self):
+        def save_loop():
+            while True:
+                time.sleep(SAVE_INTERVAL_SECONDS)
+                with self.lock:
+                    if self.dobackup:
+                        self._atomic_save()
+                        self.dobackup = False
+                        logging.info(f"State saved to {self.filename} at {datetime.utcnow().isoformat()}Z")
+                    else:
+                        logging.debug("No change in state — skipping save.")
+        thread = threading.Thread(target=save_loop, daemon=True).start()
 
     def update_sensor(self, dev_eui, dev_name, new_data: dict, touch_last_seen=True):
-        if touch_last_seen:
-            new_data["last_seen"] = datetime.utcnow().isoformat() + "Z"
-        new_data["zone"] = dev_name.rsplit("_", 1)[-1] if dev_name and "_" in dev_name else None
-        new_data["dev_name"] = dev_name
-        old_zone = self.state.get(dev_eui, {}).get("zone")
-        self.state[dev_eui] = new_data
-        self._save_state()
-        logging.debug(f"Updated state for {dev_eui}: {new_data}")
-        if old_zone and old_zone != new_data.get("zone"):
-            self._update_zone_status(old_zone)
-        if new_data.get("zone"):
-            self._update_zone_status(new_data["zone"])
-        if new_data.get("alarm") and new_data.get("alarm_expire"):
-            self._schedule_alarm_reset(dev_eui, dev_name)
-        self.update_aggregate_relays()
+        with self.lock:
+            if touch_last_seen:
+                new_data["last_seen"] = datetime.utcnow().isoformat() + "Z"
+            new_data["zone"] = dev_name.rsplit("_", 1)[-1] if dev_name and "_" in dev_name else None
+            new_data["dev_name"] = dev_name
+            old_zone = self.state.get(dev_eui, {}).get("zone")
+            self.state[dev_eui] = new_data
+            self.dobackup = True
+            logging.debug(f"Updated state for {dev_eui}: {new_data}")
+            if old_zone and old_zone != new_data.get("zone"):
+                self._update_zone_status(old_zone)
+            if new_data.get("zone"):
+                self._update_zone_status(new_data["zone"])
+            if new_data.get("alarm") and new_data.get("alarm_expire"):
+                self._schedule_alarm_reset(dev_eui, dev_name)
+            self.update_aggregate_relays()
 
     def _schedule_alarm_reset(self, dev_eui, dev_name):
         def reset():
@@ -114,22 +134,24 @@ class StateManager:
         timer.start()
 
     def get_state(self):
-        now = datetime.utcnow()
-        result = {}
-        for dev_eui, entry in self.state.items():
-            last_seen = entry.get("last_seen")
-            online = False
-            if last_seen:
-                try:
-                    seen_time = datetime.fromisoformat(last_seen.rstrip("Z"))
-                    online = (now - seen_time) < timedelta(hours=OFFLINE_THRESHOLD_HOURS)
-                except Exception as e:
-                    logging.error(f"Failed parsing last_seen {dev_eui}: {e}")
-            result[dev_eui] = {**entry, "online": online}
-        return result
+        with self.lock:
+            now = datetime.utcnow()
+            result = {}
+            for dev_eui, entry in self.state.items():
+                last_seen = entry.get("last_seen")
+                online = False
+                if last_seen:
+                    try:
+                        seen_time = datetime.fromisoformat(last_seen.rstrip("Z"))
+                        online = (now - seen_time) < timedelta(hours=OFFLINE_THRESHOLD_HOURS)
+                    except Exception as e:
+                        logging.error(f"Failed parsing last_seen {dev_eui}: {e}")
+                result[dev_eui] = {**entry, "online": online}
+            return result
 
     def get_sensor(self, devEUI):
-        return self.state.get(devEUI)
+        with self.lock:
+            return self.state.get(devEUI)
 
     def get_zone_states(self):
         return self.zones
