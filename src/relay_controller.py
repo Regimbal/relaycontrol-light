@@ -12,6 +12,7 @@ def send_tcp_command(ip: str, relay_index: int, state: bool):
     waits for the target to ack and close socket.
     """
     command = f"SR {relay_index} {'on' if state else 'off'}\n"
+    logger.debug(f"[RELAY] Sending relay {relay_index} @ {ip}: {command}")
     try:
         with socket.create_connection((ip, 17123), timeout=2) as sock:
             sock.sendall(command.encode("utf-8"))

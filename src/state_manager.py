@@ -17,55 +17,70 @@ class StateManager:
         self._reset_timers = {}
         self.zones = {}
         self.zone_config = {}
-        self.aggregate_config = {}
+        self.relay_state = {}
         self.lock = threading.Lock()
         self.dobackup = False
         self._start_auto_save()
 
-        zones_raw = yaml.safe_load(open("config/zones.yaml"))
+        #with open("config/zones.yaml") as f:
+        #    self.zone_config = yaml.safe_load(f)
 
-        for key, val in zones_raw.items():
-            if key == "__aggregates__":
-                self.aggregate_config = val
-            else:
-                self.zone_config[key] = val
+    def _apply_relay_state(self, ip, index, new_state):
+        key = (ip, index)
+        old_state = self.relay_state.get(key)
+        if old_state != new_state:
+            self.relay_state[key] = new_state
+            send_tcp_command(ip, index, new_state)
 
-    def update_aggregate_relays(self):
-        if not self.aggregate_config:
-            return
+    def _update_shared_relays(self):
+        """Gère les relais partagés (hors 'alarm') : tamper, battery_low, online."""
+        relay_groups = {}
 
-        # Batterie faible : au moins un capteur concerné
-        if "battery_low" in self.aggregate_config:
-            battery_low = any(sensor.get("battery_low") for sensor in self.state.values())
-            cfg = self.aggregate_config["battery_low"]
-            send_tcp_command(cfg["ip"], cfg["relay"], battery_low)
+        for zone, config in self.zone_config.items():
+            ip = config.get("ip")
+            for field, relay_index in config.items():
+                if field in ["ip", "alarm"]:
+                    continue
+                if relay_index is None:
+                    continue
+                key = (ip, relay_index)
+                if key not in relay_groups:
+                    relay_groups[key] = {"field": field, "zones": []}
+                relay_groups[key]["zones"].append(zone)
 
-        # Connectivité : au moins un capteur offline
-        if "connectivity" in self.aggregate_config:
-            any_offline = any(not sensor.get("online", False) for sensor in self.state.values())
-            cfg = self.aggregate_config["connectivity"]
-            send_tcp_command(cfg["ip"], cfg["relay"], any_offline)
+        for (ip, relay_index), group in relay_groups.items():
+            field = group["field"]
+            zones = group["zones"]
+
+            # Le relais doit être ON si au moins une zone a le champ concerné à True
+            active = any(self.zones.get(z, {}).get(field, False) for z in zones)
+            self._apply_relay_state(ip, relay_index, active)
 
     def _update_zone_status(self, zone):
         sensors = [c for c in self.state.values() if c.get("zone") == zone]
+        prev = self.zones.get(zone, {})
         alarm = any(c.get("alarm") for c in sensors)
         tamper = any(c.get("tamper") for c in sensors)
-        prev = self.zones.get(zone, {})
-        self.zones[zone] = {"alarm": alarm, "tamper": tamper}
+        battery_low = any(c.get("battery_low") for c in sensors)
+        offline = any(not c.get("online", True) for c in sensors)
+        self.zones[zone] = {
+            "alarm": alarm,
+            "tamper": tamper,
+            "battery_low": battery_low,
+            "online": not offline
+        }
         logging.info(f"Updates zones: {self.zones}")
         config = self.zone_config.get(zone)
         if not config:
             logging.warning("no config file for zones found")
             return
-        # Comparaison et envoi des commandes TCP
-        for key in ["alarm", "tamper"]:
-            if key not in config:
-                continue
-            if prev.get(key) != self.zones[zone][key]:
-                relay_index = config[key]
-                ip = config["ip"]
-                send_tcp_command(ip, relay_index, self.zones[zone][key])
 
+        # Commande pour le champ non partagé 'alarm'
+        if "alarm" in config and prev.get("alarm") != alarm:
+            self._apply_relay_state(config["ip"], config["alarm"], alarm)
+
+        # MàJ des relais partagés
+        self._update_shared_relays()
 
     def _load_state(self):
         if os.path.exists(self.filename):
@@ -114,7 +129,6 @@ class StateManager:
                 self._update_zone_status(new_data["zone"])
             if new_data.get("alarm") and new_data.get("alarm_expire"):
                 self._schedule_alarm_reset(dev_eui, dev_name)
-            self.update_aggregate_relays()
 
     def _schedule_alarm_reset(self, dev_eui, dev_name):
         def reset():
