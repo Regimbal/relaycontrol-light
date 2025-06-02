@@ -116,7 +116,7 @@
         const row = `<tr>
           <td>${name}</td>
           <td>${entry.zone ?? ""}</td>
-          <td><span class="status-dot ${entry.online ? 'online' : 'offline'}"></span></td>
+          <td><span class="status-dot ${entry.offline ? 'offline' : 'online'}"></span></td>
           <td class="value-${entry.alarm}">${entry.alarm ? "Oui" : "Non"}</td>
           <td class="value-${entry.tamper}">${entry.tamper ? "Oui" : "Non"}</td>
           <td class="value-${entry.battery_low}">${entry.battery_low ? "Oui" : "Non"}</td>
