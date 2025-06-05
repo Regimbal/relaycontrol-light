@@ -3,50 +3,30 @@ import json, logging, yaml, time
 import os
 import threading
 from datetime import datetime, timedelta
+from sqlite_state_store import SQLiteStateStore
 from relay_controller import send_tcp_command
 
 STATE_FILE = "state.json"
+DB_FILE = "state.db"
+
 SAVE_INTERVAL_SECONDS = 3600  # toutes les heures
 
 OFFLINE_THRESHOLD_HOURS = 24
 
 class StateManager:
-    def __init__(self, filename=STATE_FILE):
-        self.filename = filename
-        self.state = self._load_state()
+    def __init__(self, db_path=DB_FILE, json_path=STATE_FILE):
+        self.store = SQLiteStateStore(db_path=db_path, json_path=json_path)
+        self.state = self.store.load_all()
         self._reset_timers = {}
         self.zones = {}
         self.zone_config = {}
         self.relay_state = {}
         self.lock = threading.Lock()
-        self.dobackup = False
-        self._start_auto_save()
         self._start_offline_checker()
 
         with open("config/zones.yaml") as f:
             self.zone_config = yaml.safe_load(f)
 
-    def _load_state(self):
-        if os.path.exists(self.filename):
-            try:
-                with open(self.filename, "r") as f:
-                    return json.load(f)
-            except Exception as e:
-                logging.warning(f"Could not load state file: {e}")
-        return {}
-
-    def _start_auto_save(self):
-        def save_loop():
-            while True:
-                time.sleep(SAVE_INTERVAL_SECONDS)
-                with self.lock:
-                    if self.dobackup:
-                        self._atomic_save()
-                        self.dobackup = False
-                        logging.info(f"State saved to {self.filename} at {datetime.utcnow().isoformat()}Z")
-                    else:
-                        logging.debug("No change in state — skipping save.")
-        thread = threading.Thread(target=save_loop, daemon=True).start()
     
     def _start_offline_checker(self):
         def check_loop():
@@ -84,7 +64,7 @@ class StateManager:
             new_data["dev_name"] = dev_name
             old_zone = self.state.get(dev_eui, {}).get("zone")
             self.state[dev_eui] = new_data
-            self.dobackup = True
+            self.store.save_sensor(dev_eui, new_data)
             logging.debug(f"Updated state for {dev_eui}: {new_data}")
             if old_zone and old_zone != new_data.get("zone"):
                 self._update_zone_status(old_zone)
@@ -174,17 +154,6 @@ class StateManager:
     def _recompute_zones(self):
         for zone in self.zone_config:
             self._update_zone_status(zone)
-
-
-
-    def _atomic_save(self):
-        tmp_file = self.filename + ".tmp"
-        try:
-            with open(tmp_file, "w") as f:
-                json.dump(self.state, f, indent=2)
-            os.replace(tmp_file, self.filename)
-        except Exception as e:
-            logging.error(f"Could not save state file: {e}")
 
 
 
