@@ -7,7 +7,7 @@ from state_manager_instance import state_manager
 logger = logging.getLogger(__name__)
 
 client = mqtt.Client(client_id="relaycontroller")
-mqtt_cfg = get_mqtt_config()
+mqtt_cfg = None
 
 def connect_with_retries(client, host, port, keepalive, retry_interval=5):
     while True:
@@ -57,6 +57,11 @@ def on_message(client, userdata, msg):
         logging.error(f"Error while processing MQTT message: {e}")
 
 def start_mqtt():
+    global mqtt_cfg
+    # Load MQTT configuration at runtime to take into account any external
+    # configuration file loaded by the main program.
+    mqtt_cfg = get_mqtt_config()
+
      # Authentification utilisateur
     username = mqtt_cfg.get("username")
     password = mqtt_cfg.get("password")
