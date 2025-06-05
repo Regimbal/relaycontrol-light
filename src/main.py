@@ -2,7 +2,7 @@ import argparse
 import logging
 import threading
 import sys, signal
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, send_from_directory, request, abort
 from config_loader import load_config, get_log_level, get_dashboard_config
 from logger_config import setup_logging
 from mqtt_listener import start_mqtt, stop_mqtt
@@ -29,6 +29,26 @@ def api_state():
 @app.route("/api/zones")
 def api_zones():
     return jsonify(state_manager.get_zone_states())
+
+# Zone configuration endpoints
+@app.route("/api/zone", methods=["GET"])
+def list_zone_configs():
+    return jsonify(state_manager.zone_store.load_all())
+
+
+@app.route("/api/zone/<zone>", methods=["GET", "POST", "PUT", "DELETE"])
+def zone_config(zone):
+    if request.method == "GET":
+        data = state_manager.zone_store.load_all().get(zone)
+        if data is None:
+            abort(404)
+        return jsonify(data)
+    elif request.method in ["POST", "PUT"]:
+        state_manager.zone_store.save_zone(zone, request.json or {})
+        return jsonify({"status": "ok"})
+    elif request.method == "DELETE":
+        state_manager.zone_store.delete_zone(zone)
+        return jsonify({"status": "ok"})
 
 def graceful_exit(signum, frame):
     logging.info("Stopping program...")

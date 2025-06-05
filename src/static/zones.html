@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Zones</title>
+  <style>
+    table { border-collapse: collapse; }
+    th, td { border: 1px solid #ccc; padding: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Zone Configuration</h1>
+  <p><a href="/">Back to dashboard</a></p>
+  <table id="zone-table">
+    <thead>
+      <tr>
+        <th>Zone</th><th>IP</th><th>Alarm</th><th>Tamper</th><th>Battery Low</th><th>Conn Issue</th><th></th><th></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <button id="add-zone">Add Zone</button>
+<script>
+async function loadZones() {
+  const res = await fetch('/api/zone');
+  const data = await res.json();
+  const tbody = document.querySelector('#zone-table tbody');
+  tbody.innerHTML = '';
+  for (const [zone, cfg] of Object.entries(data)) {
+    tbody.appendChild(createRow(zone, cfg));
+  }
+}
+
+function createRow(zone, cfg) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="name" value="${zone}"></td>
+    <td><input class="ip" value="${cfg.ip ?? ''}"></td>
+    <td><input class="alarm" type="number" value="${cfg.alarm ?? ''}"></td>
+    <td><input class="tamper" type="number" value="${cfg.tamper ?? ''}"></td>
+    <td><input class="battery_low" type="number" value="${cfg.battery_low ?? ''}"></td>
+    <td><input class="conn_issue" type="number" value="${cfg.conn_issue ?? ''}"></td>
+    <td><button class="save">Save</button></td>
+    <td><button class="delete">Delete</button></td>`;
+  tr.querySelector('.save').addEventListener('click', () => saveRow(tr));
+  tr.querySelector('.delete').addEventListener('click', () => deleteZone(zone));
+  return tr;
+}
+
+async function saveRow(tr) {
+  const zone = tr.querySelector('.name').value;
+  const cfg = {
+    ip: tr.querySelector('.ip').value,
+    alarm: parseInt(tr.querySelector('.alarm').value) || null,
+    tamper: parseInt(tr.querySelector('.tamper').value) || null,
+    battery_low: parseInt(tr.querySelector('.battery_low').value) || null,
+    conn_issue: parseInt(tr.querySelector('.conn_issue').value) || null,
+  };
+  await fetch('/api/zone/' + zone, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(cfg)
+  });
+  loadZones();
+}
+
+async function deleteZone(zone) {
+  await fetch('/api/zone/' + zone, {method: 'DELETE'});
+  loadZones();
+}
+
+document.getElementById('add-zone').addEventListener('click', () => {
+  const tbody = document.querySelector('#zone-table tbody');
+  tbody.appendChild(createRow('', {}));
+});
+
+loadZones();
+</script>
+</body>
+</html>

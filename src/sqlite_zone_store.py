@@ -74,3 +74,32 @@ class SQLiteZoneStore:
         except Exception as e:
             logging.error(f"Error migrating zones YAML: {e}")
             raise
+
+    def save_zone(self, zone, config: dict):
+        """Insert or update a zone configuration."""
+        with self.lock, sqlite3.connect(self.db_path) as conn:
+            conn.execute(
+                """
+                INSERT INTO zones (zone, ip, alarm, tamper, battery_low, conn_issue)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(zone) DO UPDATE SET
+                    ip=excluded.ip,
+                    alarm=excluded.alarm,
+                    tamper=excluded.tamper,
+                    battery_low=excluded.battery_low,
+                    conn_issue=excluded.conn_issue
+                """,
+                (
+                    zone,
+                    config.get("ip"),
+                    config.get("alarm"),
+                    config.get("tamper"),
+                    config.get("battery_low"),
+                    config.get("conn_issue"),
+                ),
+            )
+
+    def delete_zone(self, zone):
+        """Remove a zone from the table."""
+        with self.lock, sqlite3.connect(self.db_path) as conn:
+            conn.execute("DELETE FROM zones WHERE zone = ?", (zone,))
