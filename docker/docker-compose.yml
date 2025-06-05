@@ -1,0 +1,11 @@
+version: "3.8"
+name: test-mqtt
+services:
+  mqtt:
+    image: eclipse-mosquitto
+    container_name: mqtt-broker
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./test-env/mosquitto.conf:/mosquitto/config/mosquitto.conf
+

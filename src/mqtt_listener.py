@@ -17,7 +17,7 @@ def connect_with_retries(client, host, port, keepalive, retry_interval=5):
             return
         except Exception as e:
             logging.error(f"Failed to connect to MQTT broker : {e}")
-            logging.info(f"New attempt in {retry_interval} secs...")
+            logging.error(f"New attempt in {retry_interval} secs...")
             time.sleep(retry_interval)
 
 def on_connect(client, userdata, flags, rc):
