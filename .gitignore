@@ -5,3 +5,4 @@ __pycache__/
 *.zip
 state.json
 state.db
+*.migrated
