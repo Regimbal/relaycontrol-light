@@ -4,6 +4,7 @@ import os
 import threading
 from datetime import datetime, timedelta
 from sqlite_state_store import SQLiteStateStore
+from sqlite_zone_store import SQLiteZoneStore
 from relay_controller import send_tcp_command
 
 STATE_FILE = "state.json"
@@ -16,16 +17,14 @@ OFFLINE_THRESHOLD_HOURS = 24
 class StateManager:
     def __init__(self, db_path=DB_FILE, json_path=STATE_FILE):
         self.store = SQLiteStateStore(db_path=db_path, json_path=json_path)
+        self.zone_store = SQLiteZoneStore(db_path=db_path)
         self.state = self.store.load_all()
+        self.zone_store = SQLiteZoneStore(db_path=db_path)
         self._reset_timers = {}
         self.zones = {}
-        self.zone_config = {}
         self.relay_state = {}
         self.lock = threading.Lock()
         self._start_offline_checker()
-
-        with open("config/zones.yaml") as f:
-            self.zone_config = yaml.safe_load(f)
 
     
     def _start_offline_checker(self):
