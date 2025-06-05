@@ -97,7 +97,7 @@ class StateManager:
         alarm = any(c.get("alarm") for c in sensors)
         tamper = any(c.get("tamper") for c in sensors)
         battery_low = any(c.get("battery_low") for c in sensors)
-        offline = any(not c.get("offline") for c in sensors)
+        offline = any(c.get("offline") for c in sensors)
         self.zones[zone] = {
             "alarm": alarm,
             "tamper": tamper,
