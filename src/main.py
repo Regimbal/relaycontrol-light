@@ -39,7 +39,7 @@ def graceful_exit(signum, frame):
 def main():
     parser = argparse.ArgumentParser(description="Light relay controller")
     parser.add_argument("--config", help="Path to YAML configuration file")
-    parser.add_argument("--log-level", help="Enforce devug level (DEBUG, INFO, WARNING, ERROR)")
+    parser.add_argument("--log-level", help="Enforce debug level (DEBUG, INFO, WARNING, ERROR)")
     args = parser.parse_args()
 
     load_config(args.config)
