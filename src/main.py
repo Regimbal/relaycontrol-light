@@ -3,7 +3,7 @@ import logging
 import threading
 import sys, signal
 from flask import Flask, jsonify, send_from_directory, request, abort
-from config_loader import load_config, get_log_level, get_dashboard_config
+from config_loader import load_config, get_log_level, get_dashboard_config, get_mqtt_config
 from logger_config import setup_logging
 from mqtt_listener import start_mqtt, stop_mqtt
 from state_manager import StateManager
@@ -12,8 +12,8 @@ from state_manager_instance import state_manager
 log = logging.getLogger('werkzeug')
 log.setLevel(logging.WARNING)
 
-# MQTT thread
-mqtt_thread = threading.Thread(target=start_mqtt, daemon=True)
+# MQTT thread placeholder, created in main()
+mqtt_thread = None
 
 app = Flask(__name__, static_folder="static")
 
@@ -66,6 +66,9 @@ def main():
     log_level = args.log_level or get_log_level()
     setup_logging(log_level)
 
+    # MQTT thread
+    global mqtt_thread
+    mqtt_thread = threading.Thread(target=start_mqtt, args=(get_mqtt_config(),), daemon=True)
     mqtt_thread.start()
 
     dashboard_cfg = get_dashboard_config()

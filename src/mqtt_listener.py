@@ -1,6 +1,5 @@
 import yaml, importlib, re, logging, time, json
 import paho.mqtt.client as mqtt
-from config_loader import get_mqtt_config
 from state_manager import StateManager
 from state_manager_instance import state_manager
 
@@ -56,11 +55,11 @@ def on_message(client, userdata, msg):
     except Exception as e:
         logging.error(f"Error while processing MQTT message: {e}")
 
-def start_mqtt():
+def start_mqtt(cfg=None):
     global mqtt_cfg
-    # Load MQTT configuration at runtime to take into account any external
-    # configuration file loaded by the main program.
-    mqtt_cfg = get_mqtt_config()
+    # configuration file loaded by the main program. A configuration
+    # dictionary can be passed directly for testing purposes.
+    mqtt_cfg = cfg
 
      # Authentification utilisateur
     username = mqtt_cfg.get("username")
