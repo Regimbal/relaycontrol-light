@@ -12,10 +12,10 @@ relay_controller.send_tcp_command = mock_send_tcp_command
 
 def simulate_test():
     # Créer un StateManager avec une configuration factice
-    manager = StateManager(filename="test_state.json")
+    manager = StateManager()
     manager.zone_config = {
-        "Z1": {"ip": "127.0.0.1", "alarm": 1, "tamper": 2, "battery_low": 3, "online": 4},
-        "Z2": {"ip": "127.0.0.1", "alarm": 5, "tamper": 2, "battery_low": 3, "online": 4},
+        "Z1": {"ip": "127.0.0.1", "alarm": 1, "tamper": 2, "battery_low": 3, "offline": 4},
+        "Z2": {"ip": "127.0.0.1", "alarm": 5, "tamper": 2, "battery_low": 3, "offline": 4},
     }
 
     # Capteur 1 déclenche une alarme
