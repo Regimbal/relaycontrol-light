@@ -13,12 +13,12 @@ def decode(payload: bytes) -> dict:
 
         # BATTERY
         if channel_id == 0x01 and channel_type == 0x75:
-            frame_type = "HEARTBEAT"
+            frame_type = "UP_HEARTBEAT"
             battery_low = payload[i] <= 50
             i += 1
         # PRESS STATE
         elif channel_id == 0xff and channel_type == 0x2e:
-            frame_type = "BUTTON"
+            frame_type = "UP_EVENT"
             type = payload[i]
             i += 1
 
