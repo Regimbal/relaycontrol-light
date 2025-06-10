@@ -1,8 +1,8 @@
 import logging
 
 def decode(payload: bytes) -> dict:
-    battery_low = False
-    alarm = False
+    battery_low = None
+    alarm = None
     alarm_expire = None
     i = 0
     while i < len(payload):

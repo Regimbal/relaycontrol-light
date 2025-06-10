@@ -22,10 +22,10 @@ def decode(payload: bytes) -> dict:
     frame_type = frameIdMap.get(payload[3], "UNKNOWN")
 
     tamper = None
-    battery_low = False
+    battery_low = None
     power_supply = None
     alarm = None
-    alarm_expire = False
+    alarm_expire = None
 
     if application_type == "HE":
         power_supply = (payload[1] & 0x7F) / 10
@@ -43,6 +43,7 @@ def decode(payload: bytes) -> dict:
             if len(payload) < 6:
                 raise ValueError("Payload too short for UP_EVENT frame (need at least 6 bytes)")
             alarm = bool(payload[5] & 0x01)
+            alarm_expire = False
         elif application_type == "OPT":
             if len(payload) < 6:
                 raise ValueError("Payload too short for UP_EVENT frame (need at least 6 bytes)")

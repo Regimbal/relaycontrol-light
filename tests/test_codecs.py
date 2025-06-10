@@ -11,7 +11,7 @@ def test_invissys_he_heartbeat_lowbat():
         "tamper": False,
         "battery_low": True,
         "alarm": None,
-        "alarm_expire": False,
+        "alarm_expire": None,
         "battery_voltage": 3.3,
     }
 
@@ -52,7 +52,7 @@ def test_invissys_opt_heartbeat():
         "tamper": False,
         "battery_low": False,
         "alarm": None,
-        "alarm_expire": False,
+        "alarm_expire": None,
         "battery_voltage": 3.2,
     }
 
@@ -65,7 +65,7 @@ def test_invissys_opt_heartbeat_tamper_lowbat():
         "tamper": True,
         "battery_low": True,
         "alarm": None,
-        "alarm_expire": False,
+        "alarm_expire": None,
         "battery_voltage": 2.5,
     }
 
@@ -104,7 +104,7 @@ def test_milesight_button_heartbeat():
         "frameType": "UP_HEARTBEAT",
         "tamper": False,
         "battery_low": False,
-        "alarm": False,
+        "alarm": None,
         "alarm_expire": None,
     }
 
@@ -116,7 +116,7 @@ def test_milesight_button_heartbeat_lowbat():
         "frameType": "UP_HEARTBEAT",
         "tamper": False,
         "battery_low": True,
-        "alarm": False,
+        "alarm": None,
         "alarm_expire": None,
     }
 
@@ -127,7 +127,7 @@ def test_milesight_button_event():
         "applicationType": "SOS",
         "frameType": "UP_EVENT",
         "tamper": False,
-        "battery_low": False,
+        "battery_low": None,
         "alarm": True,
         "alarm_expire": True,
     }

@@ -56,12 +56,21 @@ class StateManager:
 
     def update_sensor(self, dev_eui, dev_name, new_data: dict, touch_last_seen=True):
         with self.lock:
+            current = self.state.get(dev_eui, {})
+
             if touch_last_seen:
                 new_data["last_seen"] = datetime.utcnow().isoformat() + "Z"
                 new_data["offline"] = False  # capteur vu = actif
+            
             new_data["zone"] = dev_name.rsplit("_", 1)[-1] if dev_name and "_" in dev_name else None
             new_data["dev_name"] = dev_name
-            old_zone = self.state.get(dev_eui, {}).get("zone")
+
+            # Merge intelligemment : on garde les anciens états si non précisés
+            for key in ["alarm", "tamper", "battery_low"]:
+                if key not in new_data or new_data[key] is None:
+                    new_data[key] = current.get(key, False) # False si la valeur n'a jamais existe
+
+            old_zone = current.get("zone")
             self.state[dev_eui] = new_data
             self.store.save_sensor(dev_eui, new_data)
             logging.debug(f"Updated state for {dev_eui}: {new_data}")
