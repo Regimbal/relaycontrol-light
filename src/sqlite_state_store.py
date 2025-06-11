@@ -1,7 +1,13 @@
-import sqlite3, json, os, logging
+"""SQLite-based persistence for sensor states."""
+
+import sqlite3
+import json
+import os
+import logging
 import threading
 
 class SQLiteStateStore:
+    """Store and retrieve sensor state from an SQLite database."""
     def __init__(self, db_path="state.db", json_path="state.json"):
         self.db_path = db_path
         self.lock = threading.Lock()

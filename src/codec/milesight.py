@@ -1,6 +1,9 @@
+"""Codec for decoding Milesight SOS button payloads."""
+
 import logging
 
 def decode(payload: bytes) -> dict:
+    """Decode a binary payload from a Milesight button."""
     battery_low = None
     alarm = None
     alarm_expire = None

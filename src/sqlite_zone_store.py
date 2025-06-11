@@ -1,7 +1,14 @@
-import sqlite3, yaml, os, logging
+"""Database wrapper for storing zone configurations in SQLite."""
+
+import sqlite3
+import yaml
+import os
+import logging
 import threading
 
 class SQLiteZoneStore:
+    """Load and persist zone configurations."""
+
     def __init__(self, db_path="state.db", yaml_path="config/zones.yaml"):
         self.db_path = db_path
         self.yaml_path = yaml_path

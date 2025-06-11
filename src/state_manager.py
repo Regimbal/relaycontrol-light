@@ -1,5 +1,7 @@
-# state_manager.py
-import logging, time
+"""Central state management logic for sensors and zones."""
+
+import logging
+import time
 import os
 import threading
 from datetime import datetime, timedelta, UTC
@@ -15,6 +17,7 @@ OFFLINE_THRESHOLD_HOURS = 24
 
 class StateManager:
     """Handle sensor state and relay logic using SQLite stores."""
+    
     def __init__(self, db_path=DB_FILE, json_path=STATE_FILE):
         self.store = SQLiteStateStore(db_path=db_path, json_path=json_path)
         self.zone_store = SQLiteZoneStore(db_path=db_path)

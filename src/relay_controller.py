@@ -1,4 +1,4 @@
-# relay_controller.py
+"""Utility for sending TCP commands to relay controllers."""
 import socket
 import logging
 
@@ -6,11 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 def send_tcp_command(ip: str, relay_index: int, state: bool):
-    """
-    Send TCP request to enable / disable a relay.
-    Request format : "SR <index> on|off"
-    waits for the target to ack and close socket.
-    """
+    """Send a TCP command to toggle a relay on the target device."""
     command = f"SR {relay_index} {'on' if state else 'off'}\n"
     logger.debug(f"[RELAY] Sending relay {relay_index} @ {ip}: {command}")
     try:

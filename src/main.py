@@ -1,3 +1,5 @@
+"""Application entry point and HTTP API for relay control."""
+
 import argparse
 import logging
 import threading

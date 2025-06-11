@@ -1,3 +1,5 @@
+"""Codec for decoding Invissys sensor payloads."""
+
 import logging
 
 applicationTypeMap = {
@@ -15,6 +17,7 @@ frameIdMap = {
 }
 
 def decode(payload: bytes) -> dict:
+    """Decode a binary payload from an Invissys device."""
     if len(payload) < 4:
         raise ValueError("Payload too short")
 

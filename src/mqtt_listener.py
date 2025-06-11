@@ -1,4 +1,11 @@
-import yaml, importlib, re, logging, time, json
+"""MQTT listener that decodes messages and updates the StateManager."""
+
+import yaml
+import importlib
+import re
+import logging
+import time
+import json
 import paho.mqtt.client as mqtt
 from state_manager import StateManager
 from state_manager_instance import state_manager
@@ -9,6 +16,7 @@ client = mqtt.Client(client_id="relaycontroller")
 mqtt_cfg = None
 
 def connect_with_retries(client, host, port, keepalive, retry_interval=5):
+    """Connect to the broker and retry forever on failure."""
     while True:
         try:
             client.connect(host, port, keepalive)
@@ -20,6 +28,7 @@ def connect_with_retries(client, host, port, keepalive, retry_interval=5):
             time.sleep(retry_interval)
 
 def on_connect(client, userdata, flags, rc):
+    """Subscribe to the configured topic once the broker connection succeeds."""
     if rc == 0:
         logger.info(f"MQTT successfully connected with code {rc}")
         client.subscribe(mqtt_cfg["topic"])
@@ -28,9 +37,11 @@ def on_connect(client, userdata, flags, rc):
         logger.error(f"Failed to connect to MQTT broker, return code {rc}")
 
 def on_disconnect(client, userdata, rc):
+    """Log unexpected disconnection."""
     logger.warning("Disconnected from MQTT Broker")
 
 def on_message(client, userdata, msg):
+    """Decode an incoming message and forward it to the state manager."""
     try:
         payload = json.loads(msg.payload.decode())
         logging.debug(f"Received message: {payload}")
@@ -56,6 +67,7 @@ def on_message(client, userdata, msg):
         logging.error(f"Error while processing MQTT message: {e}")
 
 def start_mqtt(cfg=None):
+    """Start the MQTT loop with the provided configuration."""
     global mqtt_cfg
     # configuration file loaded by the main program. A configuration
     # dictionary can be passed directly for testing purposes.
@@ -78,4 +90,5 @@ def start_mqtt(cfg=None):
     client.loop_forever()
 
 def stop_mqtt():
+    """Disconnect from the MQTT broker."""
     client.disconnect()
