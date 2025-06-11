@@ -31,28 +31,31 @@ class StateManager:
         def check_loop():
             while True:
                 time.sleep(60)  # vérifie toutes les minutes
-                with self.lock:
-                    now = datetime.utcnow()
-                    updated = False
-                    for dev_eui, entry in self.state.items():
-                        last_seen = entry.get("last_seen")
-                        if not last_seen:
-                            continue
-                        try:
-                            seen_time = datetime.fromisoformat(last_seen.rstrip("Z"))
-                            offline = (now - seen_time) > timedelta(hours=OFFLINE_THRESHOLD_HOURS)
-                            if entry.get("offline") != offline:
-                                entry["offline"] = offline
-                                updated = True
-                        except Exception as e:
-                            logging.warning(f"Could not parse last_seen for {dev_eui}: {e}")
-                    if updated:
-                        self._recompute_zones()
-                        self._update_shared_relays()
+                self.run_offline_check()
 
         threading.Thread(target=check_loop, daemon=True).start()
 
-
+    def run_offline_check(self):
+        """Check sensor last_seen timestamps and update offline status."""
+        with self.lock:
+            now = datetime.utcnow()
+            updated = False
+            for dev_eui, entry in self.state.items():
+                last_seen = entry.get("last_seen")
+                if not last_seen:
+                    continue
+                try:
+                    seen_time = datetime.fromisoformat(last_seen.rstrip("Z"))
+                except Exception as e:
+                    logging.warning(f"Could not parse last_seen for {dev_eui}: {e}")
+                    continue
+                offline = (now - seen_time) > timedelta(hours=OFFLINE_THRESHOLD_HOURS)
+                if entry.get("offline") != offline:
+                    entry["offline"] = offline
+                    updated = True
+            if updated:
+                self._recompute_zones()
+                self._update_shared_relays()
 
     def update_sensor(self, dev_eui, dev_name, new_data: dict, touch_last_seen=True):
         with self.lock:

@@ -1,5 +1,6 @@
 import logging
 import pytest
+import time
 
 import state_manager as sm
 from sqlite_zone_store import SQLiteZoneStore
@@ -61,3 +62,42 @@ def test_zone_update(monkeypatch):
     assert manager.zones["Z2"]["battery_low"] is False
     assert len(commands) == 1
     assert ("127.0.0.1", 3, False) in commands
+
+
+def test_offline_detection(monkeypatch):
+    manager, commands = setup_manager(monkeypatch)
+    monkeypatch.setattr(sm, "OFFLINE_THRESHOLD_HOURS", 0)
+
+    manager.update_sensor("X", "sensor_Z1", {"alarm": False})
+    commands.clear()
+    manager.state["X"]["last_seen"] = "2000-01-01T00:00:00"
+
+    manager.run_offline_check()
+
+    assert manager.state["X"]["offline"] is True
+    assert manager.zones["Z1"]["offline"] is True
+    assert len(commands) == 1
+    assert ("127.0.0.1", 4, True) in commands
+
+
+class FakeTimer:
+    def __init__(self, interval, func):
+        self.func = func
+
+    def start(self):
+        sm.threading.Thread(target=self.func).start()
+
+    def cancel(self):
+        pass
+
+
+def test_alarm_auto_reset(monkeypatch):
+    manager, commands = setup_manager(monkeypatch)
+    monkeypatch.setattr(sm.threading, "Timer", FakeTimer)
+
+    manager.update_sensor("A1", "sensor_Z1", {"alarm": True, "alarm_expire": True})
+    time.sleep(0.05)
+
+    assert manager.zones["Z1"]["alarm"] is False
+    assert ("127.0.0.1", 1, True) in commands
+    assert ("127.0.0.1", 1, False) in commands
