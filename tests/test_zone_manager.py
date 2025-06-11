@@ -28,25 +28,36 @@ def setup_manager(monkeypatch):
 def test_zone_update(monkeypatch):
     manager, commands = setup_manager(monkeypatch)
 
-    manager.update_sensor("A", "sensor1_Z1", {"alarm": True})
+    manager.update_sensor("A", "sensor1_Z1", {"alarm": True, "tamper": True})
     assert manager.zones["Z1"]["alarm"] is True
+    assert manager.zones["Z1"]["tamper"] is True
+    assert manager.zones["Z1"]["battery_low"] is False
+    assert manager.zones["Z1"]["offline"] is False
+    assert len(commands) == 4
     assert ("127.0.0.1", 1, True) in commands
-
-    manager.update_sensor("B", "sensor2_Z1", {"battery_low": True})
-    assert manager.zones["Z1"]["battery_low"] is True
-    assert ("127.0.0.1", 3, True) in commands
+    assert ("127.0.0.1", 2, True) in commands
+    assert ("127.0.0.1", 3, False) in commands
+    assert ("127.0.0.1", 4, False) in commands
 
     commands.clear()
-    manager.update_sensor("B", "sensor2_Z1", {"battery_low": False})
-    assert manager.zones["Z1"]["battery_low"] is False
-    assert ("127.0.0.1", 3, False) in commands
+    manager.update_sensor("B", "sensor2_Z1", {"battery_low": True})
+    assert manager.zones["Z1"]["battery_low"] is True
+    assert len(commands) == 1
+    assert ("127.0.0.1", 3, True) in commands
 
     commands.clear()
     manager.update_sensor("C", "sensor3_Z2", {"battery_low": True})
     assert manager.zones["Z2"]["battery_low"] is True
-    assert ("127.0.0.1", 3, True) in commands
+    assert len(commands) == 1
+    assert ("127.0.0.1", 5, False) in commands
+
+    commands.clear()
+    manager.update_sensor("B", "sensor2_Z1", {"battery_low": False})
+    assert manager.zones["Z1"]["battery_low"] is False
+    assert len(commands) == 0
 
     commands.clear()
     manager.update_sensor("C", "sensor3_Z2", {"battery_low": False})
     assert manager.zones["Z2"]["battery_low"] is False
+    assert len(commands) == 1
     assert ("127.0.0.1", 3, False) in commands
