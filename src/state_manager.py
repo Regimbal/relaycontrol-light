@@ -9,12 +9,12 @@ from relay_controller import send_tcp_command
 
 STATE_FILE = "state.json"
 DB_FILE = "state.db"
-
 SAVE_INTERVAL_SECONDS = 3600  # toutes les heures
-
 OFFLINE_THRESHOLD_HOURS = 24
 
+
 class StateManager:
+    """Handle sensor state and relay logic using SQLite stores."""
     def __init__(self, db_path=DB_FILE, json_path=STATE_FILE):
         self.store = SQLiteStateStore(db_path=db_path, json_path=json_path)
         self.zone_store = SQLiteZoneStore(db_path=db_path)

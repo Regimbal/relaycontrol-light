@@ -1,15 +1,21 @@
 import argparse
 import logging
 import threading
-import sys, signal
+import sys
+import signal
 from flask import Flask, jsonify, send_from_directory, request, abort
-from config_loader import load_config, get_log_level, get_dashboard_config, get_mqtt_config
+from config_loader import (
+    load_config,
+    get_log_level,
+    get_dashboard_config,
+    get_mqtt_config,
+)
 from logger_config import setup_logging
 from mqtt_listener import start_mqtt, stop_mqtt
 from state_manager import StateManager
 from state_manager_instance import state_manager
 
-log = logging.getLogger('werkzeug')
+log = logging.getLogger("werkzeug")
 log.setLevel(logging.WARNING)
 
 # MQTT thread placeholder, created in main()
@@ -74,7 +80,10 @@ def main():
     dashboard_cfg = get_dashboard_config()
 
     if dashboard_cfg.get("enable", False):
-        app.run(host=dashboard_cfg.get("bind", "0.0.0.0"), port=dashboard_cfg.get("port", 8080))
+        app.run(
+            host=dashboard_cfg.get("bind", "0.0.0.0"),
+            port=dashboard_cfg.get("port", 8080),
+        )
     else:
         mqtt_thread.join()  # Keep running even without Flask
     
