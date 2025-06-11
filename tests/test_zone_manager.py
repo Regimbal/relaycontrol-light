@@ -72,7 +72,7 @@ def test_offline_detection(monkeypatch):
 
     manager.update_sensor("X", "sensor_Z1", {"alarm": False})
     commands.clear()
-    manager.state["X"]["last_seen"] = "2000-01-01T00:00:00"
+    manager.state["X"]["last_seen"] = "2000-01-01T00:00:00Z"
 
     manager.run_offline_check()
 

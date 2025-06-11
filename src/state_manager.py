@@ -2,7 +2,7 @@
 import logging, time
 import os
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from sqlite_state_store import SQLiteStateStore
 from sqlite_zone_store import SQLiteZoneStore
 from relay_controller import send_tcp_command
@@ -38,14 +38,16 @@ class StateManager:
     def run_offline_check(self):
         """Check sensor last_seen timestamps and update offline status."""
         with self.lock:
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             updated = False
             for dev_eui, entry in self.state.items():
                 last_seen = entry.get("last_seen")
                 if not last_seen:
                     continue
                 try:
-                    seen_time = datetime.fromisoformat(last_seen.rstrip("Z"))
+                    seen_time = datetime.fromisoformat(
+                                last_seen.replace("Z", "+00:00")
+                            )
                 except Exception as e:
                     logging.warning(f"Could not parse last_seen for {dev_eui}: {e}")
                     continue
@@ -62,7 +64,9 @@ class StateManager:
             current = self.state.get(dev_eui, {})
 
             if touch_last_seen:
-                new_data["last_seen"] = datetime.utcnow().isoformat() + "Z"
+                new_data["last_seen"] = (
+                    datetime.now(UTC).isoformat().replace("+00:00", "Z")
+                )
                 new_data["offline"] = False  # capteur vu = actif
             
             new_data["zone"] = dev_name.rsplit("_", 1)[-1] if dev_name and "_" in dev_name else None
