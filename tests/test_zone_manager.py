@@ -71,6 +71,7 @@ def test_offline_detection(monkeypatch):
     monkeypatch.setattr(sm, "OFFLINE_THRESHOLD_HOURS", 0)
 
     manager.update_sensor("X", "sensor_Z1", {"alarm": False})
+    manager.update_sensor("Y", "sensor_Z2", {"alarm": False})
     commands.clear()
     manager.state["X"]["last_seen"] = "2000-01-01T00:00:00Z"
 
