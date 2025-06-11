@@ -1,5 +1,1 @@
-- le path vers zones.yaml est codé en dur malgré le fichier de conf
-- le path vers fichier state.json de backup aussi
-- passer sur sqlite (reprendre la mécanique de backup)
-- ajouter le relais agrégé pour offline
 - ajouter modbus ?

@@ -6,6 +6,7 @@ import re
 import logging
 import time
 import json
+import base64
 import paho.mqtt.client as mqtt
 from state_manager import StateManager
 from state_manager_instance import state_manager
@@ -50,14 +51,19 @@ def on_message(client, userdata, msg):
         codec_name = payload.get("applicationName")
         data_encode = payload.get("data_encode", "")
 
-        if data_encode != "hexstring":
-            logging.error(f"Ignored message from {dev_eui} (data_encode={data_encode}) different from HEX")
+        if data_encode in ("", "hexstring"):
+            data = payload.get("data", "")
+            payload_bytes = bytes.fromhex(data)
+        elif data_encode == "base64":
+            data = payload.get("data", "")
+            payload_bytes = base64.b64decode(data)
+        else:
+            logging.error(
+                f"Ignored message from {dev_eui} (data_encode={data_encode}) unsupported"
+            )
             return
         
-        data_hex = payload.get("data", "")
-
         codec = importlib.import_module(f"codec.{codec_name}")
-        payload_bytes = bytes.fromhex(data_hex)
         data_decoded = codec.decode(payload_bytes)
         logging.debug(f"{dev_eui}: decoded payload is {data_decoded}")
 
