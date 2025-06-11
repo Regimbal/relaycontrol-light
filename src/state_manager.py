@@ -1,5 +1,5 @@
 # state_manager.py
-import json, logging, yaml, time
+import logging, time
 import os
 import threading
 from datetime import datetime, timedelta
@@ -19,7 +19,7 @@ class StateManager:
         self.store = SQLiteStateStore(db_path=db_path, json_path=json_path)
         self.zone_store = SQLiteZoneStore(db_path=db_path)
         self.state = self.store.load_all()
-        self.zone_store = SQLiteZoneStore(db_path=db_path)
+        self.zone_config = self.zone_store.load_all()
         self._reset_timers = {}
         self.zones = {}
         self.relay_state = {}

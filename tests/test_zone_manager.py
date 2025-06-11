@@ -11,6 +11,12 @@ def setup_manager(monkeypatch):
     monkeypatch.setattr(sm.StateManager, "_start_offline_checker", lambda self: None)
     monkeypatch.setattr(SQLiteZoneStore, "migrate_from_yaml", lambda self: None)
 
+    zone_cfg = {
+        "Z1": {"ip": "127.0.0.1", "alarm": 1, "tamper": 2, "battery_low": 3, "offline": 4},
+        "Z2": {"ip": "127.0.0.1", "alarm": 5, "tamper": 2, "battery_low": 3, "offline": 4},
+    }
+    monkeypatch.setattr(SQLiteZoneStore, "load_all", lambda self: zone_cfg)
+
     commands = []
     def fake_send(ip, index, state):
         commands.append((ip, index, state))
@@ -19,10 +25,6 @@ def setup_manager(monkeypatch):
     tmp = tempfile.NamedTemporaryFile(delete=False)
     tmp.close()
     manager = sm.StateManager(db_path=tmp.name, json_path=None)
-    manager.zone_config = {
-        "Z1": {"ip": "127.0.0.1", "alarm": 1, "tamper": 2, "battery_low": 3, "offline": 4},
-        "Z2": {"ip": "127.0.0.1", "alarm": 5, "tamper": 2, "battery_low": 3, "offline": 4},
-    }
     return manager, commands
 
 
