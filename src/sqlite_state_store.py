@@ -1,5 +1,4 @@
 import sqlite3, json, os, logging
-from datetime import datetime
 import threading
 
 class SQLiteStateStore:
