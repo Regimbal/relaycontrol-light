@@ -1,5 +1,6 @@
 import yaml
 import os
+import copy
 
 DEFAULT_CONFIG = {
     "log": {
@@ -24,14 +25,27 @@ DEFAULT_CONFIG = {
     
 }
 
-CONFIG = DEFAULT_CONFIG.copy()
+CONFIG = copy.deepcopy(DEFAULT_CONFIG)
 
 def load_config(path=None):
     global CONFIG
     if path and os.path.exists(path):
-        with open(path, "r") as f:
-            user_config = yaml.safe_load(f)
-            merge_dict(CONFIG, user_config)
+        try:
+            with open(path, "r") as f:
+                user_config = yaml.safe_load(f)
+        except yaml.YAMLError as e:
+            print(f"Error parsing YAML configuration file {path}: {e}")
+            return
+
+        if user_config is None:
+            return
+
+        if not isinstance(user_config, dict):
+            print(f"Configuration in {path} is not a dictionary, ignoring")
+            return
+
+        merge_dict(CONFIG, user_config)
+
 
 def merge_dict(base, updates):
     for k, v in updates.items():
