@@ -11,8 +11,6 @@ import paho.mqtt.client as mqtt
 from state_manager import StateManager
 from state_manager_instance import state_manager
 
-logger = logging.getLogger(__name__)
-
 client = mqtt.Client(client_id="relaycontroller")
 mqtt_cfg = None
 
@@ -31,15 +29,15 @@ def connect_with_retries(client, host, port, keepalive, retry_interval=5):
 def on_connect(client, userdata, flags, rc):
     """Subscribe to the configured topic once the broker connection succeeds."""
     if rc == 0:
-        logger.info(f"MQTT successfully connected with code {rc}")
+        logging.info(f"MQTT successfully connected with code {rc}")
         client.subscribe(mqtt_cfg["topic"])
-        logger.info(f"Subscribed to topic {mqtt_cfg['topic']}")
+        logging.info(f"Subscribed to topic {mqtt_cfg['topic']}")
     else:
-        logger.error(f"Failed to connect to MQTT broker, return code {rc}")
+        logging.error(f"Failed to connect to MQTT broker, return code {rc}")
 
 def on_disconnect(client, userdata, rc):
     """Log unexpected disconnection."""
-    logger.warning("Disconnected from MQTT Broker")
+    logging.warning("Disconnected from MQTT Broker")
 
 def on_message(client, userdata, msg):
     """Decode an incoming message and forward it to the state manager."""
